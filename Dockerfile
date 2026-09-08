@@ -2,7 +2,9 @@
 # 用法(方式一:应用容器 + 已有 Supabase 云库):
 #   cp .env.example .env   # 填入你的 Supabase URL / key
 #   docker compose up -d --build
-FROM node:22-alpine AS deps
+# 基础镜像可用构建参数覆盖(国内可指定 CN 镜像源,见 DOCKER.md)
+ARG NODE_IMAGE=node:22-alpine
+FROM ${NODE_IMAGE} AS deps
 WORKDIR /app
 # 可通过构建参数切换 npm 源(国内可设 registry.npmmirror.com)
 ARG NPM_REGISTRY=https://registry.npmjs.org/
