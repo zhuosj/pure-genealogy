@@ -1,0 +1,25 @@
+# pure-genealogy —— 应用容器(连接你已有的 Supabase 项目)
+# 1) cp .env.example .env
+# 2) 在 .env 填入 NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+#    (可选)NEXT_PUBLIC_FAMILY_SURNAME=你的姓氏
+# 3) docker compose up -d --build   → http://localhost:3000
+#
+# 想让"数据库也跑在自己机器/云主机上(不依赖 Supabase 云)",
+# 见 DOCKER.md 的"方式二:整套 Supabase 自托管"。此处只容器化 Next.js 应用。
+services:
+  pure-genealogy:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}
+        NEXT_PUBLIC_FAMILY_SURNAME: ${NEXT_PUBLIC_FAMILY_SURNAME:-刘}
+        # 国内构建可 .env 里加 NPM_REGISTRY=https://registry.npmmirror.com/
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org/}
+    image: pure-genealogy:local
+    container_name: pure-genealogy
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
