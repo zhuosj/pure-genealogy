@@ -24,6 +24,8 @@ docker compose up -d --build
 - `NEXT_PUBLIC_*` 属构建期变量:改了 `.env` 要 `docker compose build` 重新构建再起。
 - 登录账号需先在 Supabase Auth 里启用 Email/密码登录,再在库里手动建账号,或用项目自带注册页。
 
+> 注:本项目已去除 `next/font/google` 联网拉取字体(改为系统字体栈:Noto Serif SC / 思源宋体 / 宋体-简 / SimSun 等),因此**构建与运行都不依赖 Google 服务**,国内 CI/云主机可离线构建。
+
 ## 方式二:Supabase 整套自托管(数据也放自己机器/云主机)
 
 数据库格式与云端 Supabase 100% 一致(Schema 就是标准 PostgreSQL,见 `.github/family_members.sql`),所以**应用代码一行都不用改**,只需让应用指向自托管的 Supabase 地址:

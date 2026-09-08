@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Noto_Serif_SC } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/next";
 import NextTopLoader from "nextjs-toploader";
@@ -16,19 +15,6 @@ export const metadata: Metadata = {
   description: "基于 Next.js 和 Supabase 构建的家族族谱管理系统",
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  display: "swap",
-  subsets: ["latin"],
-});
-
-const notoSerifSC = Noto_Serif_SC({
-  variable: "--font-noto-serif-sc",
-  weight: ["200", "300", "400", "500", "600", "700", "900"],
-  subsets: ["latin"],
-  display: "swap",
-});
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${notoSerifSC.variable} font-serif antialiased`}>
+      <body className="font-serif antialiased">
         <NextTopLoader color="#2A6E4D" showSpinner={false} shadow="0 0 10px #2A6E4D,0 0 5px #2A6E4D" />
         <ThemeProvider
           attribute="class"

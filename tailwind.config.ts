@@ -58,8 +58,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
-        serif: ["var(--font-noto-serif-sc)", "ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],
+        sans: ["-apple-system", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "ui-sans-serif", "system-ui", "sans-serif"],
+        serif: ["Noto Serif SC", "Source Han Serif SC", "Source Han Serif CN", "Songti SC", "SimSun", "ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],
       },
     },
   },
