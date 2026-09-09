@@ -163,7 +163,8 @@ export function ImportMembersDialog({ onSuccess }: ImportMembersDialogProps) {
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <div className="flex items-center gap-4">
+          {/* 下载模板 + 上传文件:窄屏改为纵向堆叠,避免按钮/输入框互相挤压 */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             <Button variant="secondary" onClick={handleDownloadTemplate} size="sm">
               <Download className="h-4 w-4 mr-2" />
               下载模板

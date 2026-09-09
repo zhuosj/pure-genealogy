@@ -580,7 +580,8 @@ export function FamilyMembersTable({
 
       {/* 表格 */}
       <div className={cn("border rounded-lg transition-opacity duration-200", isPending && "opacity-60 pointer-events-none")}>
-        <Table>
+        {/* 表格列多且含长文本;ui/table 自带 overflow-x-auto,这里给最小宽度让窄屏走横向滚动而非挤压列 */}
+        <Table className="min-w-[1024px]">
           <TableHeader>
             <TableRow>
               {canEdit && (

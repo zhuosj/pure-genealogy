@@ -205,7 +205,7 @@ function TimelineFlow({ initialData }: TimelineClientProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && onSearch()}
-              className="w-48 h-8"
+              className="w-28 sm:w-48 h-8"
             />
             <Button size="sm" variant="ghost" onClick={onSearch} className="h-8 w-8 p-0">
               <Search className="h-4 w-4" />
