@@ -404,11 +404,11 @@ export function FamilyForceGraph({ data }: ForceGraphProps) {
         nodeThreeObject={(node: any) => {
           const sprite = new SpriteText(node.name);
           sprite.color = node.id === highlightedId ? "#ff0000" : nodeTextColor;
-          sprite.textHeight = 6;
-          sprite.padding = 2;
-          sprite.backgroundColor = isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)";
+          sprite.textHeight = 8.5; // 放大姓名,便于查看(原 6)
+          sprite.padding = 3;
+          sprite.backgroundColor = isDark ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.6)";
           sprite.borderRadius = 4;
-          sprite.position.y = 12; // 显示在节点上方
+          sprite.position.y = 15; // 显示在节点上方
           return sprite;
         }}
         
