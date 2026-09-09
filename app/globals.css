@@ -152,3 +152,21 @@
 .dark .brand-text {
   color: #57b184;
 }
+
+/* 整站底色:极淡的松柏绿顶部辉光,让页面不再单调、更具家族主题感 */
+body {
+  background-color: hsl(var(--background));
+  background-image: radial-gradient(
+    ellipse 90% 55% at 50% -8%,
+    hsl(150 35% 45% / 0.08),
+    transparent 65%
+  );
+  background-attachment: fixed;
+}
+.dark body {
+  background-image: radial-gradient(
+    ellipse 90% 55% at 50% -8%,
+    hsl(155 30% 28% / 0.20),
+    transparent 65%
+  );
+}
