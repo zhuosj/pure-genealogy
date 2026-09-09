@@ -45,6 +45,7 @@ import { GenerationNodeType } from "./generation-node";
 import { toChineseNum } from "./utils/chinese-num";
 import { getBranchBaseColor, generateBranchColor, type HSLColor } from "./utils/colors";
 import { FlowingEdge } from "./flowing-edge";
+import { FAMILY_SURNAME } from "@/lib/utils";
 import type { FamilyMemberNode } from "./actions";
 import dagre from "@dagrejs/dagre";
 
@@ -736,7 +737,7 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
     }
 
     // 4. 绘制水印 (平铺)
-    const watermarkText = userEmail || 'Liu Family';
+    const watermarkText = userEmail || `${FAMILY_SURNAME}氏族谱`;
     ctx.save();
     ctx.rotate(-30 * Math.PI / 180);
     ctx.font = "16px sans-serif";

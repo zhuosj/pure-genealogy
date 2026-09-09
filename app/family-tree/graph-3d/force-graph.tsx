@@ -63,6 +63,11 @@ export function FamilyForceGraph({ data }: ForceGraphProps) {
     setInstanceKey(Math.random().toString(36).substring(7));
   }, []);
 
+  // 3D 画布重建(instanceKey 变化)时,允许再次自动取景
+  useEffect(() => {
+    hasFramedRef.current = false;
+  }, [instanceKey]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -77,6 +82,8 @@ export function FamilyForceGraph({ data }: ForceGraphProps) {
   const [isTourActive, setIsTourActive] = useState(false);
   const [isTourPaused, setIsTourPaused] = useState(false);
   const tourTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // 是否已执行过"首次自动取景"(布局引擎首次停稳时对准整棵树)
+  const hasFramedRef = useRef(false);
 
   // 监听容器大小变化
   useEffect(() => {
@@ -240,6 +247,55 @@ export function FamilyForceGraph({ data }: ForceGraphProps) {
     }
   }, []);
 
+  // 布局首次停稳后,自动把视角对准整棵树(根据节点实际分布计算包围球)
+  const handleEngineStop = useCallback(() => {
+    const fg = fgRef.current;
+    if (!fg || hasFramedRef.current) return;
+    hasFramedRef.current = true;
+
+    const nodes: { x?: number; y?: number; z?: number }[] =
+      fg.graphData?.().nodes || [];
+    if (nodes.length === 0) return;
+
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
+    nodes.forEach((n) => {
+      if (typeof n.x === "number") {
+        minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x);
+      }
+      if (typeof n.y === "number") {
+        minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y);
+      }
+      if (typeof n.z === "number") {
+        minZ = Math.min(minZ, n.z); maxZ = Math.max(maxZ, n.z);
+      }
+    });
+
+    const hasSpread =
+      nodes.length > 1 && [maxX - minX, maxY - minY, maxZ - minZ].some((d) => d > 0);
+    if (!hasSpread) {
+      // 单节点或尚未铺开:退回默认视角
+      fg.cameraPosition({ x: 0, y: 0, z: 600 }, { x: 0, y: 0, z: 0 }, 0);
+      return;
+    }
+
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    const cz = (minZ + maxZ) / 2;
+    const radius =
+      Math.max(
+        Math.hypot(maxX - minX, maxY - minY, maxZ - minZ) / 2,
+        60
+      ) * 1.15;
+
+    fg.cameraPosition(
+      { x: cx, y: cy, z: cz + radius * 2.4 },
+      { x: cx, y: cy, z: cz },
+      800
+    );
+  }, []);
+
   // 全屏切换
   const toggleFullscreen = useCallback(async () => {
     if (!containerRef.current) return;
@@ -341,6 +397,7 @@ export function FamilyForceGraph({ data }: ForceGraphProps) {
         linkColor={() => linkColor}
         linkDirectionalParticles={2} // 粒子效果指示方向
         linkDirectionalParticleWidth={2}
+        onEngineStop={handleEngineStop}
         
         // 节点文字渲染
         nodeThreeObjectExtend={true}
