@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Plus, Trash2, Search, ChevronLeft, ChevronRight, Loader2, Info } from "lucide-react";
 import type { FamilyMember } from "./actions";
 import {
   createFamilyMember,
@@ -43,6 +43,7 @@ import { FatherCombobox } from "./father-combobox";
 import { RichTextEditor } from "@/components/rich-text/editor";
 import { RichTextViewer } from "@/components/rich-text/viewer";
 import { cn } from "@/lib/utils";
+import { useViewer } from "@/hooks/use-viewer";
 
 interface FamilyMembersTableProps {
   initialData: FamilyMember[];
@@ -62,6 +63,10 @@ export function FamilyMembersTable({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = React.useTransition();
+
+  // 权限:游客只读,仅管理员可增删改(loading 期间不渲染可写 UI,避免闪烁)
+  const { loading: viewerLoading, isAdmin } = useViewer();
+  const canEdit = !viewerLoading && isAdmin;
 
   const [selectedIds, setSelectedIds] = React.useState<Set<number>>(new Set());
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -213,6 +218,11 @@ export function FamilyMembersTable({
     setIsDialogOpen(true);
   };
 
+  // 游客只读:点击姓名/父亲时打开纯展示的生平事迹查看弹窗
+  const handleOpenMemberDetail = (member: FamilyMember) => {
+    setBiographyMember(member);
+  };
+
   // 关闭弹窗
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
@@ -282,25 +292,37 @@ export function FamilyMembersTable({
           </Button>
         </form>
 
-        {/* 操作按钮 */}
-        <div className="flex gap-2 flex-wrap w-full lg:w-auto">
-          <ImportMembersDialog onSuccess={() => router.refresh()} />
-          
-          <Button onClick={handleOpenAddDialog}>
-            <Plus className="h-4 w-4 mr-2" />
-            新增
-          </Button>
+        {/* 操作按钮:仅管理员可见 */}
+        {canEdit && (
+          <div className="flex gap-2 flex-wrap w-full lg:w-auto">
+            <ImportMembersDialog onSuccess={() => router.refresh()} />
+            
+            <Button onClick={handleOpenAddDialog}>
+              <Plus className="h-4 w-4 mr-2" />
+              新增
+            </Button>
 
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={selectedIds.size === 0 || isDeleting}
-          >
-            {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
-            删除 {selectedIds.size > 0 && `(${selectedIds.size})`}
-          </Button>
-        </div>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={selectedIds.size === 0 || isDeleting}
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              删除 {selectedIds.size > 0 && `(${selectedIds.size})`}
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* 游客只读提示:非管理员(含未登录)显示 */}
+      {!viewerLoading && !isAdmin && (
+        <div className="flex items-start gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            当前为游客只读模式,仅可浏览;需管理员邮箱登录后可新增/编辑/删除
+          </span>
+        </div>
+      )}
 
       {/* 新增/编辑弹窗 */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
@@ -561,13 +583,15 @@ export function FamilyMembersTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={allSelected}
-                  onCheckedChange={handleSelectAll}
-                  aria-label="全选"
-                />
-              </TableHead>
+              {canEdit && (
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="全选"
+                  />
+                </TableHead>
+              )}
               <TableHead className="w-16">ID</TableHead>
               <TableHead>姓名</TableHead>
               <TableHead className="w-20">世代</TableHead>
@@ -597,20 +621,26 @@ export function FamilyMembersTable({
                   key={member.id}
                   data-state={selectedIds.has(member.id) ? "selected" : undefined}
                 >
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedIds.has(member.id)}
-                      onCheckedChange={(checked) =>
-                        handleSelectOne(member.id, checked as boolean)
-                      }
-                      aria-label={`选择 ${member.name}`}
-                    />
-                  </TableCell>
+                  {canEdit && (
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.has(member.id)}
+                        onCheckedChange={(checked) =>
+                          handleSelectOne(member.id, checked as boolean)
+                        }
+                        aria-label={`选择 ${member.name}`}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-mono">{member.id}</TableCell>
                   <TableCell className="font-medium">
                     <button
                       type="button"
-                      onClick={() => handleOpenEditDialog(member)}
+                      onClick={() =>
+                        canEdit
+                          ? handleOpenEditDialog(member)
+                          : handleOpenMemberDetail(member)
+                      }
                       className="text-primary hover:underline cursor-pointer text-left"
                     >
                       {member.name}
@@ -630,7 +660,11 @@ export function FamilyMembersTable({
                             try {
                               const fatherData = await fetchMemberById(member.father_id);
                               if (fatherData) {
-                                handleOpenEditDialog(fatherData);
+                                if (canEdit) {
+                                  handleOpenEditDialog(fatherData);
+                                } else {
+                                  handleOpenMemberDetail(fatherData);
+                                }
                               }
                             } finally {
                               setLoadingFatherId(null);

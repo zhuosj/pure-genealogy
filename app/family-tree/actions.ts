@@ -2,6 +2,18 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { isAdminEmail } from "@/lib/permissions";
+
+const UNAUTHORIZED_MSG = "仅管理员可执行此操作,请先使用管理员邮箱登录";
+
+/** 校验当前会话是否为管理员邮箱 */
+async function isAdminSession(): Promise<boolean> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return !!user && isAdminEmail(user.email);
+}
 
 export interface FamilyMember {
   id: number;
@@ -99,6 +111,10 @@ export interface CreateMemberInput {
 export async function createFamilyMember(
   input: CreateMemberInput
 ): Promise<{ success: boolean; error: string | null }> {
+  if (!(await isAdminSession())) {
+    return { success: false, error: UNAUTHORIZED_MSG };
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase.from("family_members").insert({
@@ -129,6 +145,10 @@ export async function deleteFamilyMembers(
 ): Promise<{ success: boolean; error: string | null }> {
   if (ids.length === 0) {
     return { success: false, error: "没有选择要删除的成员" };
+  }
+
+  if (!(await isAdminSession())) {
+    return { success: false, error: UNAUTHORIZED_MSG };
   }
 
   const supabase = await createClient();
@@ -207,6 +227,10 @@ export async function fetchMemberById(
 export async function updateFamilyMember(
   input: UpdateMemberInput
 ): Promise<{ success: boolean; error: string | null }> {
+  if (!(await isAdminSession())) {
+    return { success: false, error: UNAUTHORIZED_MSG };
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase
@@ -253,6 +277,10 @@ export interface ImportMemberInput {
 export async function batchCreateFamilyMembers(
   members: ImportMemberInput[]
 ): Promise<{ success: boolean; count: number; error: string | null }> {
+  if (!(await isAdminSession())) {
+    return { success: false, count: 0, error: UNAUTHORIZED_MSG };
+  }
+
   const supabase = await createClient();
 
   // 1. 提取所有不为空的父亲姓名
