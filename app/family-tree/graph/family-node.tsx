@@ -98,7 +98,7 @@ function FamilyMemberNodeComponent({ data }: FamilyNodeProps) {
       {/* 节点内容 */}
       <div className="flex flex-col items-center gap-1.5 mb-1 w-full">
         <div className={cn(
-          "font-semibold text-base text-center truncate w-full px-2",
+          "font-bold text-lg text-center truncate w-full px-1 tracking-wide",
           !nodeData.is_alive && "text-foreground/80"
         )} title={nodeData.name}>
           {nodeData.name}

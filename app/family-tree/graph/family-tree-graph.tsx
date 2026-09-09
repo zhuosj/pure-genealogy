@@ -70,10 +70,10 @@ interface FamilyTreeGraphInnerProps {
 }
 
 // 布局常量
-const NODE_WIDTH = 160;
-const NODE_HEIGHT = 120; // 增加高度以容纳配偶信息
-const HORIZONTAL_GAP = 80;
-const VERTICAL_GAP = 120;
+const NODE_WIDTH = 172;
+const NODE_HEIGHT = 132; // 增加高度以容纳配偶信息与更大的姓名
+const HORIZONTAL_GAP = 56; // 收紧横向间距,避免整树过宽
+const VERTICAL_GAP = 110;
 
 // 使用 dagre 进行自动布局，避免连线交叉
 function getLayoutedElements(
@@ -317,7 +317,7 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
       g.ids.push(m.id);
       map.set(m.generation, g);
     });
-    return [...map.values()].sort((a, b) => a.generation - b.generation);
+    return [...map.values()].sort((a, b) => b.generation - a.generation);
   }, [initialData]);
 
   const childrenMap = useMemo(() => {
@@ -801,7 +801,7 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
   return (
     <div
       ref={containerRef}
-      className="w-full h-[calc(100vh-200px)] min-h-[500px] border rounded-lg bg-background relative"
+      className="w-full h-[calc(100vh-200px)] min-h-[500px] border rounded-lg relative tree-canvas-bg"
     >
       <ReactFlow
         nodes={nodes}

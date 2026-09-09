@@ -89,3 +89,27 @@
 .animate-brush-reveal {
   animation: brush-reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
+
+/* 2D 族谱画布:柔和"宣纸暖"渐变(浅色),炭石墨绿渐变(深色),
+   让彩色节点/连线对比更明显也更耐看 */
+.tree-canvas-bg {
+  background-color: #f7f8f4;
+  background-image: radial-gradient(
+    ellipse 120% 90% at 20% 0%,
+    #fdfcf8 0%,
+    #f5f7f0 45%,
+    #e9eee5 100%
+  );
+}
+.dark .tree-canvas-bg {
+  background-color: #1e1c19;
+  background-image: radial-gradient(
+    ellipse 120% 90% at 50% -10%,
+    #2a2620 0%,
+    #211e1a 55%,
+    #161410 100%
+  );
+}
+.tree-canvas-bg .react-flow__background {
+  opacity: 0.85;
+}
