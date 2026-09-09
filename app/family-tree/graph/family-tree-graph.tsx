@@ -81,7 +81,8 @@ function getLayoutedElements(
   childrenMap: Map<number, number[]>,
   collapsedIds: Set<number>,
   highlightedId: number | null,
-  onToggleCollapse?: (id: number) => void
+  onToggleCollapse?: (id: number) => void,
+  compact = false
 ): { nodes: Node[]; edges: Edge[] } {
   if (!members.length) {
     return { nodes: [], edges: [] };
@@ -154,7 +155,9 @@ function getLayoutedElements(
     rankdir: "TB", // 从上到下布局
     nodesep: HORIZONTAL_GAP, // 同层节点间距
     ranksep: VERTICAL_GAP, // 层间距
-    // align: "UL", // Removed this to enable center balancing
+    // 紧凑对齐(DL):把后代向左下收拢,减少稀疏世代被拉到左右很远;
+    // 关闭时保持居中平衡(默认开启紧凑,可在"更多"菜单切换)
+    align: compact ? "DL" : undefined,
   });
 
   // 添加可见节点到 dagre 图
@@ -299,6 +302,8 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDraggable, setIsDraggable] = useState(false);
+  // 紧凑布局(默认开):后代向左下对齐,整树更紧凑;关:居中平衡
+  const [compactLayout, setCompactLayout] = useState(true);
 
   // 折叠状态管理
   const [collapsedIds, setCollapsedIds] = useState<Set<number>>(new Set());
@@ -401,8 +406,8 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
 
   // 转换数据为节点和边（使用 dagre 自动布局）
   const { nodes: initialNodes, edges: initialEdges } = useMemo(
-    () => getLayoutedElements(initialData, childrenMap, collapsedIds, highlightedId, onToggleCollapse),
-    [initialData, childrenMap, collapsedIds, highlightedId, onToggleCollapse]
+    () => getLayoutedElements(initialData, childrenMap, collapsedIds, highlightedId, onToggleCollapse, compactLayout),
+    [initialData, childrenMap, collapsedIds, highlightedId, onToggleCollapse, compactLayout]
   );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -489,13 +494,13 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
   const onResetView = useCallback(() => {
     setActiveGeneration(null);
     // 重置节点位置 (重新计算布局，保持折叠状态)
-    const { nodes: resetNodes } = getLayoutedElements(initialData, childrenMap, collapsedIds, highlightedId, onToggleCollapse);
+    const { nodes: resetNodes } = getLayoutedElements(initialData, childrenMap, collapsedIds, highlightedId, onToggleCollapse, compactLayout);
     setNodes(resetNodes);
     // 重置视图位置，加一点延迟确保节点渲染完成
     setTimeout(() => {
       reactFlowInstance.fitView({ padding: 0.2, duration: 300 });
     }, 10);
-  }, [reactFlowInstance, initialData, childrenMap, collapsedIds, highlightedId, setNodes, onToggleCollapse]);
+  }, [reactFlowInstance, initialData, childrenMap, collapsedIds, highlightedId, setNodes, onToggleCollapse, compactLayout]);
 
   // 搜索功能
   const onSearch = useCallback(() => {
@@ -789,6 +794,10 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
     setIsDraggable((prev) => !prev);
   }, []);
 
+  const toggleCompactLayout = useCallback(() => {
+    setCompactLayout((prev) => !prev);
+  }, []);
+
   // 修复：路由切换回来时，强制重新适应视图
   // onInit 中的 fitView 可能因为容器尺寸未就绪而失效
   useEffect(() => {
@@ -901,6 +910,19 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
                 <DropdownMenuItem onClick={onExpandAll}>
                   <ChevronsDown className="h-4 w-4 mr-2" />
                   全部展开
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={toggleCompactLayout} title="紧凑:后代向左下对齐;关闭:居中平衡">
+                  {compactLayout ? (
+                    <>
+                      <Lock className="h-4 w-4 mr-2" />
+                      紧凑布局(开)
+                    </>
+                  ) : (
+                    <>
+                      <Unlock className="h-4 w-4 mr-2" />
+                      紧凑布局(关)
+                    </>
+                  )}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={toggleDraggable}>
                   {isDraggable ? (
