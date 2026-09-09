@@ -113,3 +113,42 @@
 .tree-canvas-bg .react-flow__background {
   opacity: 0.85;
 }
+
+/* 模块页眉卡片:给单调的页面标题区增加质感与主题色引导 */
+.module-hero {
+  position: relative;
+  border-radius: 0.9rem;
+  border: 1px solid hsl(var(--border));
+  background: linear-gradient(
+    135deg,
+    hsl(var(--card)) 0%,
+    hsl(var(--muted) / 0.35) 100%
+  );
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.05);
+  padding: 0.85rem 1rem 0.85rem 1.1rem;
+}
+.dark .module-hero {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--card)) 0%,
+    hsl(var(--muted) / 0.18) 100%
+  );
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+}
+.module-hero__accent {
+  position: absolute;
+  left: 0;
+  top: 16%;
+  bottom: 16%;
+  width: 5px;
+  border-radius: 0 6px 6px 0;
+  background: linear-gradient(180deg, #2e9e6b 0%, #1f6e4a 100%);
+  opacity: 0.9;
+}
+/* 主色:松柏绿(与族谱统一色调一致) */
+.brand-text {
+  color: #2e7d5b;
+}
+.dark .brand-text {
+  color: #57b184;
+}

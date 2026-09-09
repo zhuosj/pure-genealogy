@@ -43,7 +43,13 @@ async function FamilyMembersWrapper({
 export default function FamilyTreePage({ searchParams }: PageProps) {
   return (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6">族谱成员列表</h1>
+      <div className="module-hero mb-6">
+        <span className="module-hero__accent" aria-hidden="true" />
+        <h1 className="text-3xl font-bold">族谱成员列表</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          成员信息表 · 游客只读,管理员登录后可编辑
+        </p>
+      </div>
 
       <Suspense fallback={<TableSkeleton />}>
         <FamilyMembersWrapper searchParams={searchParams} />

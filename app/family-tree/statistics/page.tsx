@@ -9,9 +9,10 @@ export const metadata = {
 export default function StatisticsPage() {
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
-      <div className="flex flex-col gap-2 mb-6">
+      <div className="module-hero mb-6">
+        <span className="module-hero__accent" aria-hidden="true" />
         <h1 className="text-3xl font-bold">家族数据统计</h1>
-        <p className="text-muted-foreground">
+        <p className="mt-1 text-muted-foreground">
           家族成员数据分析仪表盘
         </p>
       </div>

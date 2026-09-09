@@ -37,7 +37,8 @@ async function Graph3DLoader() {
 export default function FamilyTreeGraph3DPage() {
   return (
     <div className="container mx-auto py-6 px-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6">
+      <div className="module-hero flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6">
+        <span className="module-hero__accent" aria-hidden="true" />
         <h1 className="text-3xl font-bold">族谱关系图 (3D)</h1>
         <Button variant="outline" asChild>
           <Link href="/family-tree/graph">
