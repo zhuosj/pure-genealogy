@@ -302,7 +302,23 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
   // 折叠状态管理
   const [collapsedIds, setCollapsedIds] = useState<Set<number>>(new Set());
 
+  // 当前聚焦的世代(世代定位尺)
+  const [activeGeneration, setActiveGeneration] = useState<number | null>(null);
+
   // 构建 childrenMap
+  // 构建世代分组(用于底部世代快速定位尺)
+  const generationGroups = useMemo(() => {
+    const map = new Map<number, { generation: number; count: number; ids: number[] }>();
+    initialData.forEach((m) => {
+      if (!m.generation) return;
+      const g = map.get(m.generation) ?? { generation: m.generation, count: 0, ids: [] };
+      g.count += 1;
+      g.ids.push(m.id);
+      map.set(m.generation, g);
+    });
+    return [...map.values()].sort((a, b) => a.generation - b.generation);
+  }, [initialData]);
+
   const childrenMap = useMemo(() => {
     const map = new Map<number, number[]>();
     initialData.forEach(m => {
@@ -376,6 +392,7 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
   // 展开所有
   const onExpandAll = useCallback(() => {
     setCollapsedIds(new Set());
+    setActiveGeneration(null);
     setTimeout(() => {
       reactFlowInstance.fitView({ padding: 0.2, duration: 300 });
     }, 100);
@@ -469,6 +486,7 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
 
   // 重置视图
   const onResetView = useCallback(() => {
+    setActiveGeneration(null);
     // 重置节点位置 (重新计算布局，保持折叠状态)
     const { nodes: resetNodes } = getLayoutedElements(initialData, childrenMap, collapsedIds, highlightedId, onToggleCollapse);
     setNodes(resetNodes);
@@ -536,6 +554,62 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
     setSearchQuery("");
     setHighlightedId(null);
   }, []);
+
+  // 世代快速定位:展开该世所有成员的祖先链,再聚焦到该世
+  const jumpToGeneration = useCallback(
+    (generation: number | null) => {
+      setActiveGeneration(generation);
+
+      if (generation === null) {
+        setTimeout(() => {
+          reactFlowInstance.fitView({ padding: 0.2, duration: 300 });
+        }, 60);
+        return;
+      }
+
+      const group = generationGroups.find((g) => g.generation === generation);
+      if (!group) return;
+
+      const memberMap = new Map(initialData.map((m) => [m.id, m]));
+      const idsToExpand = new Set<number>();
+      group.ids.forEach((id) => {
+        let cur = memberMap.get(id);
+        while (cur?.father_id) {
+          const fatherId = cur.father_id;
+          if (collapsedIds.has(fatherId)) idsToExpand.add(fatherId);
+          cur = memberMap.get(fatherId);
+        }
+      });
+
+      if (idsToExpand.size > 0) {
+        setCollapsedIds((prev) => {
+          const next = new Set(prev);
+          idsToExpand.forEach((id) => next.delete(id));
+          return next;
+        });
+      }
+
+      setTimeout(
+        () => {
+          const genNodes = group.ids
+            .map((id) => reactFlowInstance.getNode(String(id)))
+            .filter((n): n is Node => !!n);
+          if (genNodes.length > 0) {
+            reactFlowInstance.fitView({
+              nodes: genNodes,
+              padding: 0.4,
+              maxZoom: 1.1,
+              duration: 500,
+            });
+          } else {
+            reactFlowInstance.fitView({ padding: 0.2, duration: 300 });
+          }
+        },
+        idsToExpand.size > 0 ? 220 : 60
+      );
+    },
+    [reactFlowInstance, generationGroups, collapsedIds, initialData]
+  );
 
   // 节点点击事件
   const onNodeClick = useCallback(
@@ -854,6 +928,47 @@ const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, o
           <span className="text-sm text-muted-foreground">
             共 {initialData.length} 位成员
           </span>
+        </Panel>
+
+        {/* 世代快速定位尺 */}
+        <Panel
+          position="bottom-center"
+          className="!m-0 p-2 sm:p-3 flex justify-center pointer-events-none z-10 max-w-[100%]"
+        >
+          <div
+            className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto rounded-lg border bg-background/95 px-2 py-1.5 shadow-sm backdrop-blur-sm max-w-[94vw] sm:max-w-[70vw]"
+          >
+            <button
+              type="button"
+              title="显示全部世代"
+              onClick={() => jumpToGeneration(null)}
+              className={`shrink-0 rounded-full px-2.5 py-1 text-xs transition-colors ${
+                activeGeneration === null
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              全部
+            </button>
+            {generationGroups.map((g) => {
+              const active = activeGeneration === g.generation;
+              return (
+                <button
+                  key={g.generation}
+                  type="button"
+                  title={`第${toChineseNum(g.generation)}世 · 共 ${g.count} 人`}
+                  onClick={() => jumpToGeneration(g.generation)}
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs transition-colors ${
+                    active
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {toChineseNum(g.generation)}世
+                </button>
+              );
+            })}
+          </div>
         </Panel>
       </ReactFlow>
     </div>
