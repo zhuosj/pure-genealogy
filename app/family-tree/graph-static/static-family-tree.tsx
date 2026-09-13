@@ -13,11 +13,11 @@ import { MemberDetailDialog } from "../member-detail-dialog";
 import type { FamilyMemberNode } from "../graph/actions";
 
 /** 静态树:不用缩放画布,按文档流渲染整棵树(超宽时横向滚动) */
-const NODE_W = 176;
-const NODE_H = 104;
-const H_GAP = 28;
-const V_GAP = 64;
-const PAD = 48;
+const NODE_W = 132;
+const NODE_H = 78;
+const H_GAP = 12;
+const V_GAP = 34;
+const PAD = 26;
 
 interface LayoutNode {
   member: FamilyMemberNode;
@@ -234,11 +234,11 @@ export function StaticFamilyTree({ data }: StaticFamilyTreeProps) {
                 aria-hidden="true"
               />
               <div
-                className="absolute z-10 flex h-6 -translate-y-1/2 items-center rounded-full border bg-background px-2 text-xs font-medium text-muted-foreground shadow-sm"
+                className="absolute z-10 flex h-5 -translate-y-1/2 items-center rounded-full border bg-background px-1.5 text-[10px] font-medium text-muted-foreground shadow-sm"
                 style={{ top: row.y, left: 0 }}
               >
                 第{toChineseNum(row.generation)}世
-                <span className="ml-1 text-[10px] opacity-70">{row.count}人</span>
+                <span className="ml-1 text-[9px] opacity-70">{row.count}人</span>
               </div>
             </div>
           ))}
@@ -278,7 +278,7 @@ export function StaticFamilyTree({ data }: StaticFamilyTreeProps) {
                   setIsDetailOpen(true);
                 }}
                 className={cn(
-                  "absolute cursor-pointer rounded-lg border-2 bg-card px-3 py-2 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+                  "absolute cursor-pointer rounded-md border-2 bg-card px-1.5 py-1 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
                   m.gender === "男"
                     ? m.is_alive
                       ? "border-blue-400 dark:border-blue-500"
@@ -289,7 +289,7 @@ export function StaticFamilyTree({ data }: StaticFamilyTreeProps) {
                         : "border-pink-300/50 dark:border-pink-900/50"
                       : "border-border",
                   !m.is_alive && "opacity-90",
-                  active && "ring-4 ring-amber-400/60 shadow-lg"
+                  active && "ring-2 ring-amber-400/70 shadow-md"
                 )}
                 style={{ left: n.x, top: n.y, width: NODE_W }}
               >
@@ -299,27 +299,27 @@ export function StaticFamilyTree({ data }: StaticFamilyTreeProps) {
                   style={{ background: n.color }}
                   aria-hidden="true"
                 />
-                <div className="mt-0.5 truncate text-center text-base font-bold" title={m.name}>
+                <div className="mt-0.5 truncate text-center text-sm font-bold leading-tight" title={m.name}>
                   {m.name}
                 </div>
                 {m.spouse && (
-                  <div className="truncate text-center text-[11px] text-muted-foreground" title={m.spouse}>
+                  <div className="truncate text-center text-[10px] leading-tight text-muted-foreground" title={m.spouse}>
                     配:{m.spouse}
                   </div>
                 )}
-                <div className="mt-1 flex flex-wrap items-center justify-center gap-1">
+                <div className="mt-0.5 flex flex-wrap items-center justify-center gap-0.5">
                   {m.generation !== null && (
-                    <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                    <Badge variant="secondary" className="px-1 py-0 text-[9px] leading-4">
                       第{m.generation}世
                     </Badge>
                   )}
                   {m.sibling_order !== null && (
-                    <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+                    <Badge variant="outline" className="px-1 py-0 text-[9px] leading-4">
                       排行{m.sibling_order}
                     </Badge>
                   )}
                   {!m.is_alive && (
-                    <span className="text-[10px] italic text-muted-foreground">已故</span>
+                    <span className="text-[9px] italic text-muted-foreground">已故</span>
                   )}
                 </div>
               </div>
