@@ -3,7 +3,7 @@ import { fetchAllFamilyMembers } from "./actions";
 import { FamilyTreeGraph } from "./family-tree-graph";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Box } from "lucide-react";
+import { Box, Rows3 } from "lucide-react";
 
 function GraphSkeleton() {
   return (
@@ -41,12 +41,20 @@ export default function FamilyTreeGraphPage() {
       <div className="module-hero flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6">
         <span className="module-hero__accent" aria-hidden="true" />
         <h1 className="text-3xl font-bold">族谱关系图</h1>
-        <Button variant="outline" asChild>
-          <Link href="/family-tree/graph-3d">
-            <Box className="mr-2 h-4 w-4" />
-            切换到 3D 视图
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/family-tree/graph-static">
+              <Rows3 className="mr-2 h-4 w-4" />
+              静态树视图(实验)
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/family-tree/graph-3d">
+              <Box className="mr-2 h-4 w-4" />
+              切换到 3D 视图
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Suspense fallback={<GraphSkeleton />}>
