@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dagre from "@dagrejs/dagre";
 import { Search, X, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,10 +26,10 @@ interface LayoutNode {
   color: string;
 }
 
-interface LayoutEdge {
+interface LayoutLink {
   id: string;
-  path: string;
-  color: string;
+  fatherId: number;
+  childId: number;
 }
 
 interface GenerationRow {
@@ -98,21 +98,12 @@ function computeLayout(data: FamilyMemberNode[]) {
   }));
   const nodeMap = new Map(nodes.map((n) => [n.member.id, n]));
 
-  const edges: LayoutEdge[] = [];
+  // 父子连线端点交给组件按"实测卡片高度"计算,保证两端都贴住卡片
+  const links: LayoutLink[] = [];
   nodes.forEach((n) => {
     const fatherId = n.member.father_id;
     if (!fatherId || !nodeMap.has(fatherId)) return;
-    const parent = nodeMap.get(fatherId)!;
-    const x1 = parent.x + NODE_W / 2;
-    const y1 = parent.y + NODE_H;
-    const x2 = n.x + NODE_W / 2;
-    const y2 = n.y;
-    const midY = (y1 + y2) / 2;
-    edges.push({
-      id: `${fatherId}-${n.member.id}`,
-      path: `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`,
-      color: n.color,
-    });
+    links.push({ id: `${fatherId}-${n.member.id}`, fatherId, childId: n.member.id });
   });
 
   // 世代行(用于左侧世代锚点/参考线)
@@ -130,7 +121,7 @@ function computeLayout(data: FamilyMemberNode[]) {
   const width = Math.max(...nodes.map((n) => n.x + NODE_W)) + PAD;
   const height = Math.max(...nodes.map((n) => n.y + NODE_H)) + PAD;
 
-  return { nodes, edges, rows, width, height };
+  return { nodes, links, rows, width, height };
 }
 
 export function StaticFamilyTree({ data }: StaticFamilyTreeProps) {
@@ -141,6 +132,66 @@ export function StaticFamilyTree({ data }: StaticFamilyTreeProps) {
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
   const [selectedMember, setSelectedMember] = useState<FamilyMemberNode | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  // 实测卡片高度(内容不同高度不同),用于让连线两端精确贴住卡片
+  const [cardHeights, setCardHeights] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    const measure = () => {
+      const next: Record<number, number> = {};
+      nodeRefs.current.forEach((el, id) => {
+        next[id] = el.offsetHeight;
+      });
+      if (Object.keys(next).length === 0) return;
+      setCardHeights((prev) => {
+        const prevKeys = Object.keys(prev);
+        const nextKeys = Object.keys(next);
+        if (prevKeys.length !== nextKeys.length) return next;
+        for (const k of nextKeys) {
+          if (Math.abs((prev[Number(k)] ?? 0) - next[Number(k)]) > 0.5) return next;
+        }
+        return prev;
+      });
+    };
+    measure();
+    const timer = setTimeout(measure, 250); // 字体/徽标渲染完成后复测一次
+    window.addEventListener("resize", measure);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", measure);
+    };
+  }, [layout]);
+
+  const nodeById = useMemo(
+    () => new Map(layout.nodes.map((n) => [n.member.id, n])),
+    [layout]
+  );
+
+  // 连线:从父卡片实测底部 -> 子卡片顶部,两端各加一个小圆点,更醒目
+  const edges = useMemo(
+    () =>
+      layout.links.flatMap((l) => {
+        const p = nodeById.get(l.fatherId);
+        const c = nodeById.get(l.childId);
+        if (!p || !c) return [];
+        const parentH = cardHeights[l.fatherId] ?? NODE_H;
+        const x1 = p.x + NODE_W / 2;
+        const y1 = p.y + parentH - 1;
+        const x2 = c.x + NODE_W / 2;
+        const y2 = c.y + 1;
+        const midY = (y1 + y2) / 2;
+        return [
+          {
+            id: l.id,
+            d: `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`,
+            x1,
+            y1,
+            x2,
+            y2,
+          },
+        ];
+      }),
+    [layout, nodeById, cardHeights]
+  );
 
   const scrollToNode = useCallback((id: number) => {
     const el = nodeRefs.current.get(id);
@@ -243,22 +294,26 @@ export function StaticFamilyTree({ data }: StaticFamilyTreeProps) {
             </div>
           ))}
 
-          {/* 连线 */}
+          {/* 连线:深松柏绿、加粗,两端带节点圆点 */}
           <svg
-            className="pointer-events-none absolute inset-0"
+            className="pointer-events-none absolute inset-0 text-emerald-700 dark:text-emerald-400"
             width={layout.width}
             height={layout.height}
             aria-hidden="true"
           >
-            {layout.edges.map((e) => (
-              <path
-                key={e.id}
-                d={e.path}
-                fill="none"
-                stroke={e.color}
-                strokeWidth={2}
-                opacity={0.55}
-              />
+            {edges.map((e) => (
+              <g key={e.id}>
+                <path
+                  d={e.d}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  opacity={0.85}
+                />
+                <circle cx={e.x1} cy={e.y1} r={2.5} fill="currentColor" opacity={0.9} />
+                <circle cx={e.x2} cy={e.y2} r={2.5} fill="currentColor" opacity={0.9} />
+              </g>
             ))}
           </svg>
 
